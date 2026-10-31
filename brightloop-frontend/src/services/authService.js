@@ -1,10 +1,14 @@
 import {
+  EmailAuthProvider,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  reauthenticateWithCredential,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  updatePassword,
+  verifyBeforeUpdateEmail,
 } from 'firebase/auth'
 import { auth, googleProvider, isFirebaseConfigured } from '../config/firebase'
 
@@ -35,6 +39,10 @@ const FIREBASE_ERROR_MESSAGES = {
   'auth/unauthorized-domain':
     'This domain is not authorized for Firebase authentication. Add it in the Firebase console.',
   'auth/internal-error': 'Firebase could not complete the request. Please try again.',
+  'auth/missing-password': 'Enter your current password to continue.',
+  'auth/reauth-unavailable':
+    'Reauthentication requires an email/password sign-in. Sign in again with your password to continue.',
+  'auth/requires-recent-login': 'Please sign in again before changing your security details.',
 }
 
 const INTEGRATION_PENDING_MESSAGE =
@@ -88,6 +96,47 @@ export function watchAuthState(onChange) {
 export async function signOutUser() {
   if (!auth) return
   await signOut(auth)
+}
+
+async function reauthenticateWithPassword(currentPassword) {
+  requireFirebase()
+  const user = auth.currentUser
+  if (!user?.email) {
+    throw new AuthServiceError(
+      'auth/reauth-unavailable',
+      'Reauthentication requires an email/password sign-in. Sign in again with your password to continue.',
+    )
+  }
+  if (!currentPassword) {
+    throw new AuthServiceError('auth/missing-password', 'Enter your current password to continue.')
+  }
+  const credential = EmailAuthProvider.credential(user.email, currentPassword)
+  await reauthenticateWithCredential(user, credential)
+  return user
+}
+
+export async function changePasswordWithReauth({ currentPassword, newPassword }) {
+  try {
+    const user = await reauthenticateWithPassword(currentPassword)
+    await updatePassword(user, newPassword)
+    return { ok: true, message: 'Your password was updated securely through Firebase.' }
+  } catch (error) {
+    return { ok: false, message: getAuthErrorMessage(error) }
+  }
+}
+
+export async function changeEmailWithReauth({ currentPassword, newEmail }) {
+  try {
+    const user = await reauthenticateWithPassword(currentPassword)
+    await verifyBeforeUpdateEmail(user, newEmail)
+    return {
+      ok: true,
+      message:
+        'A verification email was sent. Your Firebase sign-in email changes only after you verify it.',
+    }
+  } catch (error) {
+    return { ok: false, message: getAuthErrorMessage(error) }
+  }
 }
 
 export function getAuthErrorMessage(error) {

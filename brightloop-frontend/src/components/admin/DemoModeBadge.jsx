@@ -8,7 +8,7 @@ export default function DemoModeBadge({ className = '', demo = false }) {
 
   return (
     <span
-      title="Development-only preview. Firebase authentication is bypassed and all dashboard data is mocked."
+      title="Development-only preview. Firebase authentication is bypassed and all workspace data is mocked."
       className={`inline-flex h-[22px] items-center gap-1.5 rounded border border-amber-200 bg-amber-50 px-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-amber-700 ${className}`}
     >
       <FlaskConical className="h-3 w-3" aria-hidden="true" />

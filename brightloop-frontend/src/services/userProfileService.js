@@ -86,7 +86,7 @@ export async function getVerifiedProfile(firebaseUser) {
       status: PROFILE_STATUS.READY,
       profile: normalizeProfile(data),
     }
-  }   catch (error) {
+  } catch (error) {
     if (error.status === 404) {
       return { status: PROFILE_STATUS.NOT_FOUND }
     }
@@ -100,7 +100,7 @@ export async function getVerifiedProfile(firebaseUser) {
 
     return errorResult(error)
   }
-
+}
 
 export async function getOrCreateGoogleCustomerProfile({ firebaseUser }) {
   try {

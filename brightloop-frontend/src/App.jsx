@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import AdminLayout from './components/admin/AdminLayout'
 import AdminPreviewRoute from './components/admin/AdminPreviewRoute'
 import ProtectedRoute from './components/auth/ProtectedRoute'
+import CustomerLayout from './components/customer/CustomerLayout'
 import { DEMO_MODE_ENABLED } from './config/demoMode'
 import { ROLES } from './config/roles'
 import DashboardPlaceholder from './pages/DashboardPlaceholder'
@@ -14,6 +15,12 @@ import AdminPlans from './pages/admin/AdminPlans'
 import AdminProducts from './pages/admin/AdminProducts'
 import AdminStaff from './pages/admin/AdminStaff'
 import AdminTaxes from './pages/admin/AdminTaxes'
+import CustomerAccount from './pages/customer/CustomerAccount'
+import CustomerInvoiceDetail from './pages/customer/CustomerInvoiceDetail'
+import CustomerInvoices from './pages/customer/CustomerInvoices'
+import CustomerOverview from './pages/customer/CustomerOverview'
+import CustomerSubscriptionDetail from './pages/customer/CustomerSubscriptionDetail'
+import CustomerSubscriptions from './pages/customer/CustomerSubscriptions'
 
 export default function App() {
   return (
@@ -47,16 +54,28 @@ export default function App() {
         </Route>
       )}
 
+      {DEMO_MODE_ENABLED && (
+        <Route path="/demo/customer" element={<CustomerLayout demo />}>
+          <Route index element={<Navigate to="/demo/customer/dashboard" replace />} />
+          <Route path="dashboard" element={<CustomerOverview />} />
+          <Route path="subscriptions" element={<CustomerSubscriptions />} />
+          <Route path="subscriptions/:subscriptionId" element={<CustomerSubscriptionDetail />} />
+          <Route path="invoices" element={<CustomerInvoices />} />
+          <Route path="invoices/:invoiceId" element={<CustomerInvoiceDetail />} />
+          <Route path="account" element={<CustomerAccount />} />
+        </Route>
+      )}
+
       <Route element={<ProtectedRoute allowedRoles={[ROLES.CUSTOMER]} />}>
-        <Route
-          path="/customer/dashboard"
-          element={
-            <DashboardPlaceholder
-              title="Customer"
-              description="View your subscription plan, invoices, payment methods and billing history."
-            />
-          }
-        />
+        <Route path="/customer" element={<CustomerLayout />}>
+          <Route index element={<Navigate to="/customer/dashboard" replace />} />
+          <Route path="dashboard" element={<CustomerOverview />} />
+          <Route path="subscriptions" element={<CustomerSubscriptions />} />
+          <Route path="subscriptions/:subscriptionId" element={<CustomerSubscriptionDetail />} />
+          <Route path="invoices" element={<CustomerInvoices />} />
+          <Route path="invoices/:invoiceId" element={<CustomerInvoiceDetail />} />
+          <Route path="account" element={<CustomerAccount />} />
+        </Route>
       </Route>
 
       <Route element={<ProtectedRoute allowedRoles={[ROLES.STAFF]} />}>
