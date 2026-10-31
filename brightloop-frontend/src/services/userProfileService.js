@@ -30,9 +30,11 @@ async function apiRequest(firebaseUser, endpoint, options = {}) {
     return { notFound: true }
   }
 
-  if (!response.ok) {
-    throw new Error(data.detail || 'Backend request failed.')
-  }
+if (!response.ok) {
+  const error = new Error(data.detail || 'Backend request failed.')
+  error.status = response.status
+  throw error
+}
 
   return data
 }
@@ -84,10 +86,13 @@ export async function getVerifiedProfile(firebaseUser) {
       status: PROFILE_STATUS.READY,
       profile: normalizeProfile(data),
     }
-  } catch (error) {
-    if (error.message === 'Profile not found') {
+  }   catch (error) {
+    if (error.status === 404) {
       return { status: PROFILE_STATUS.NOT_FOUND }
     }
+
+    return errorResult(error)
+  }
 
     if (error.message?.includes('404')) {
       return { status: PROFILE_STATUS.NOT_FOUND }
