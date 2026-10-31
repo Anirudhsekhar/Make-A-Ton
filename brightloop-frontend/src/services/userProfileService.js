@@ -1,3 +1,6 @@
+
+const API_URL = import.meta.env.VITE_API_BASE_URL
+
 export const PROFILE_STATUS = Object.freeze({
   READY: 'ready',
   PENDING: 'pending',
@@ -5,90 +8,116 @@ export const PROFILE_STATUS = Object.freeze({
   ERROR: 'error',
 })
 
-const PROFILE_INTEGRATION_MESSAGE =
-  'Firebase sign-in succeeded, but Brightloop could not verify a trusted account profile yet. Dashboard access stays locked until the profile service is connected.'
+async function apiRequest(firebaseUser, endpoint, options = {}) {
+  if (!API_URL) {
+    throw new Error('Backend API URL is not configured.')
+  }
 
-const PROFILE_CREATE_MESSAGE =
-  'Your Firebase account was created, but your customer profile is not ready yet. Account creation stays pending until the profile service confirms it.'
+  const token = await firebaseUser.getIdToken()
 
-const PROFILE_SYNC_MESSAGE =
-  'The authenticated user could not be synced with the Brightloop API yet.'
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      ...options.headers,
+    },
+  })
 
-function errorResult(message) {
+  const data = await response.json().catch(() => ({}))
+
+  if (response.status === 404) {
+    return { notFound: true }
+  }
+
+  if (!response.ok) {
+    throw new Error(data.detail || 'Backend request failed.')
+  }
+
+  return data
+}
+
+function normalizeProfile(data) {
   return {
-    status: PROFILE_STATUS.ERROR,
-    code: 'PROFILE_OPERATION_FAILED',
-    message,
+    ...data,
+    id: data.uid,
+    firebaseUid: data.uid,
   }
 }
 
-export async function createCustomerProfile({ firebaseUser, fullName, email, businessType }) {
-  if (!firebaseUser?.uid || !fullName || !email || !businessType) {
-    return errorResult('Missing account details required to create a customer profile.')
-  }
-
-  // TODO(profile-integration): Create the customer profile using the FastAPI
-  // endpoint or Firebase data layer agreed with Thowfeek and Devananda. The
-  // backend must assign role = customer; never accept a role from this payload.
-  // Resolve with:
-  // { status: PROFILE_STATUS.READY, profile: { id, firebaseUid, email, fullName, businessType, role } }
-  // or { status: PROFILE_STATUS.ERROR, message }.
+function errorResult(error) {
   return {
-    status: PROFILE_STATUS.PENDING,
-    code: 'PROFILE_CREATE_PENDING',
-    message: PROFILE_CREATE_MESSAGE,
+    status: PROFILE_STATUS.ERROR,
+    code: 'PROFILE_OPERATION_FAILED',
+    message: error.message || 'Profile operation failed.',
+  }
+}
+
+export async function createCustomerProfile({
+  firebaseUser,
+  fullName,
+  businessType,
+}) {
+  try {
+    const data = await apiRequest(firebaseUser, '/api/auth/profile', {
+      method: 'POST',
+      body: JSON.stringify({
+        fullName,
+        businessType,
+      }),
+    })
+
+    return {
+      status: PROFILE_STATUS.READY,
+      profile: normalizeProfile(data.profile),
+    }
+  } catch (error) {
+    return errorResult(error)
   }
 }
 
 export async function getVerifiedProfile(firebaseUser) {
-  if (!firebaseUser?.uid) {
-    return errorResult('No authenticated Firebase user was supplied for profile verification.')
-  }
+  try {
+    const data = await apiRequest(firebaseUser, '/api/auth/me')
 
-  // TODO(profile-integration): Retrieve the trusted profile for
-  // firebaseUser.uid from the FastAPI backend or the server-managed Firebase
-  // data agreed with Thowfeek and Devananda. The verified role must come from
-  // that trusted source, never from localStorage, the role dropdown, or another
-  // client-controlled value. Resolve with:
-  // { status: PROFILE_STATUS.READY, profile: { id, firebaseUid, email, role } }
-  // { status: PROFILE_STATUS.NOT_FOUND }
-  // or { status: PROFILE_STATUS.ERROR, message }.
-  return {
-    status: PROFILE_STATUS.PENDING,
-    code: 'PROFILE_VERIFICATION_PENDING',
-    message: PROFILE_INTEGRATION_MESSAGE,
+    return {
+      status: PROFILE_STATUS.READY,
+      profile: normalizeProfile(data),
+    }
+  } catch (error) {
+    if (error.message === 'Profile not found') {
+      return { status: PROFILE_STATUS.NOT_FOUND }
+    }
+
+    if (error.message?.includes('404')) {
+      return { status: PROFILE_STATUS.NOT_FOUND }
+    }
+
+    return errorResult(error)
   }
 }
 
 export async function getOrCreateGoogleCustomerProfile({ firebaseUser }) {
-  if (!firebaseUser?.uid) {
-    return errorResult('No authenticated Google user was supplied for profile setup.')
-  }
+  try {
+    const data = await apiRequest(firebaseUser, '/api/auth/profile', {
+      method: 'POST',
+      body: JSON.stringify({
+        fullName: firebaseUser.displayName || 'Brightloop Customer',
+        businessType: 'other',
+      }),
+    })
 
-  // TODO(profile-integration): Look up the profile for firebaseUser.uid. If it
-  // does not exist, create a customer profile through the trusted backend. The
-  // backend must assign role = customer and never accept a role from the client.
-  // A Google account that already belongs to an Admin or Internal Staff member
-  // must resolve to that verified role instead.
-  return {
-    status: PROFILE_STATUS.PENDING,
-    code: 'GOOGLE_PROFILE_PENDING',
-    message: PROFILE_CREATE_MESSAGE,
+    return {
+      status: PROFILE_STATUS.READY,
+      profile: normalizeProfile(data.profile),
+    }
+  } catch (error) {
+    return errorResult(error)
   }
 }
 
 export async function syncAuthenticatedUser(firebaseUser) {
-  if (!firebaseUser?.uid) {
-    return errorResult('No authenticated Firebase user was supplied for API sync.')
-  }
-
-  // TODO(fastapi-integration): Sync the authenticated Firebase user with the
-  // API contract agreed with Thowfeek (for example, exchanging the Firebase ID
-  // token through the agreed endpoint). Permissions must still be read from the
-  // verified profile response, not from this sync result or client storage.
-  return {
-    status: PROFILE_STATUS.PENDING,
-    code: 'FASTAPI_SYNC_PENDING',
-    message: PROFILE_SYNC_MESSAGE,
-  }
+  // The Firebase token is verified on every protected API request.
+  // No separate sync endpoint is currently required.
+  return { status: PROFILE_STATUS.READY }
 }
