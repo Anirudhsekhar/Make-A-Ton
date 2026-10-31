@@ -8,15 +8,15 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set "VIRTUAL_ENV=C:\Users\MOHAMED THOWFEEK\Make-A-Ton\backend\venv"
+set "VIRTUAL_ENV=C:\Users\parud\OneDrive\Desktop\Make-A-Ton\backend\venv"
 
 if not defined PROMPT set PROMPT=$P$G
 
 if defined _OLD_VIRTUAL_PROMPT set PROMPT=%_OLD_VIRTUAL_PROMPT%
 if defined _OLD_VIRTUAL_PYTHONHOME set PYTHONHOME=%_OLD_VIRTUAL_PYTHONHOME%
 
-if not defined VIRTUAL_ENV_DISABLE_PROMPT set "_OLD_VIRTUAL_PROMPT=%PROMPT%"
-if not defined VIRTUAL_ENV_DISABLE_PROMPT set "PROMPT=(venv) %PROMPT%"
+set "_OLD_VIRTUAL_PROMPT=%PROMPT%"
+set "PROMPT=(venv) %PROMPT%"
 
 if defined PYTHONHOME set _OLD_VIRTUAL_PYTHONHOME=%PYTHONHOME%
 set PYTHONHOME=
