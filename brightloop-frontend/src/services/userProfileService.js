@@ -100,7 +100,7 @@ export async function getVerifiedProfile(firebaseUser) {
 
     return errorResult(error)
   }
-}
+
 
 export async function getOrCreateGoogleCustomerProfile({ firebaseUser }) {
   try {

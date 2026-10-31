@@ -1,4 +1,6 @@
 
+from typing import Literal
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
@@ -9,24 +11,58 @@ router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 security = HTTPBearer()
 
+BusinessType = Literal[
+    "enterprise",
+    "student",
+    "small-business",
+    "startup",
+    "freelancer",
+    "other"
+]
+
+ALLOWED_ROLES = {"admin", "customer", "internal_staff"}
+ALLOWED_STATUSES = {"active", "inactive"}
+
 
 class CustomerProfile(BaseModel):
     fullName: str = Field(min_length=2)
-    businessType: str = "other"
+    businessType: BusinessType
     phoneNumber: str | None = None
+
 
 
 def verify_user(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     try:
-        return auth.verify_id_token(credentials.credentials)
+        decoded_token = auth.verify_id_token(
+            credentials.credentials,
+            check_revoked=True
+        )
+
+        return decoded_token
+
     except Exception:
         raise HTTPException(
             status_code=401,
-            detail="Invalid or expired authentication token"
+            detail="Invalid, expired, or revoked authentication token"
         )
 
+
+
+def require_role(*allowed_roles):
+    def role_checker(user: dict = Depends(verify_user)):
+        role = user.get("role")
+
+        if role not in allowed_roles:
+            raise HTTPException(
+                status_code=403,
+                detail="You do not have permission to access this resource"
+            )
+
+        return user
+
+    return role_checker
 
 @router.post("/profile")
 def create_profile(
@@ -36,16 +72,29 @@ def create_profile(
     uid = user["uid"]
     user_ref = db.collection("users").document(uid)
 
-    # Check whether profile already exists
     existing_user = user_ref.get()
 
+    # Never overwrite an existing profile or its role
     if existing_user.exists:
+        existing_data = existing_user.to_dict()
+
+        if existing_data.get("status") == "inactive":
+            raise HTTPException(status_code=403, detail="Account is inactive")
+
         return {
             "message": "Profile already exists",
-            "profile": existing_user.to_dict()
+            "profile": existing_data
         }
 
-    # Get authentication provider from Firebase token
+    # Prevent accounts with non-customer Custom Claims from
+    # creating a customer profile
+    claimed_role = user.get("role")
+    if claimed_role and claimed_role != "customer":
+        raise HTTPException(
+            status_code=403,
+            detail="Only customer accounts can use public registration"
+        )
+
     provider = user.get("firebase", {}).get(
         "sign_in_provider", "password"
     )
@@ -69,15 +118,9 @@ def create_profile(
     return {
         "message": "Customer profile created successfully",
         "profile": {
-            "uid": uid,
-            "fullName": profile_data["fullName"],
-            "email": profile_data["email"],
-            "businessType": profile_data["businessType"],
-            "phoneNumber": profile_data["phoneNumber"],
-            "photoURL": profile_data["photoURL"],
-            "role": "customer",
-            "status": "active",
-            "authProvider": provider
+            **profile_data,
+            "createdAt": None,
+            "updatedAt": None
         }
     }
 
@@ -93,4 +136,15 @@ def get_current_user(user: dict = Depends(verify_user)):
             detail="User profile not found"
         )
 
-    return user_doc.to_dict()
+    profile = user_doc.to_dict()
+
+    if profile.get("role") not in ALLOWED_ROLES:
+        raise HTTPException(status_code=403, detail="Invalid account role")
+
+    if profile.get("status") not in ALLOWED_STATUSES:
+        raise HTTPException(status_code=403, detail="Invalid account status")
+
+    if profile["status"] == "inactive":
+        raise HTTPException(status_code=403, detail="Account is inactive")
+
+    return profile
