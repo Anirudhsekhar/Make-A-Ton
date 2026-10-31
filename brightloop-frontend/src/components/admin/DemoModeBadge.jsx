@@ -1,8 +1,8 @@
 import { FlaskConical } from 'lucide-react'
 import { ADMIN_PREVIEW_ENABLED } from '../../config/adminPreview'
 
-export default function DemoModeBadge({ className = '' }) {
-  if (!ADMIN_PREVIEW_ENABLED) {
+export default function DemoModeBadge({ className = '', demo = false }) {
+  if (!demo && !ADMIN_PREVIEW_ENABLED) {
     return null
   }
 

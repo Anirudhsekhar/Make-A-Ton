@@ -2,7 +2,8 @@ import { Link, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { Loader2, LogOut, RefreshCw, ShieldAlert, ShieldX } from 'lucide-react'
 import Brand from '../../components/Brand'
 import AccessStatusScreen from '../../components/auth/AccessStatusScreen'
-import { ROLE_HOME, ROLE_LABELS, isKnownRole } from '../../config/roles'
+import { ADMIN_PREVIEW_ENABLED } from '../../config/adminPreview'
+import { ROLE_HOME, ROLE_LABELS, ROLES, isKnownRole } from '../../config/roles'
 import { useAuth } from '../../context/AuthContext'
 
 function SessionLoader() {
@@ -26,6 +27,13 @@ function SessionLoader() {
 export default function ProtectedRoute({ allowedRoles = [] }) {
   const location = useLocation()
   const { status, role, message, refreshProfile, logout } = useAuth()
+
+  const isAdminArea =
+    location.pathname === '/admin' || location.pathname.startsWith('/admin/')
+
+  if (ADMIN_PREVIEW_ENABLED && (allowedRoles.includes(ROLES.ADMIN) || isAdminArea)) {
+    return <Outlet />
+  }
 
   if (status === 'loading' || status === 'resolving') {
     return <SessionLoader />

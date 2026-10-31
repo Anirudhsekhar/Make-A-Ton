@@ -3,6 +3,7 @@ import { LogOut, ShieldCheck, X } from 'lucide-react'
 import Brand from '../Brand'
 import { ADMIN_NAV } from '../../config/adminNav'
 import { ADMIN_PREVIEW_ENABLED, ADMIN_PREVIEW_USER } from '../../config/adminPreview'
+import { DEMO_ADMIN_USER, toDemoPath } from '../../config/demoMode'
 import { ROLE_LABELS } from '../../config/roles'
 import { useAuth } from '../../context/AuthContext'
 import { getInitials } from '../../lib/adminFormat'
@@ -15,22 +16,24 @@ function navClassName({ isActive }) {
   }`
 }
 
-export default function AdminSidebar({ open, onClose }) {
+export default function AdminSidebar({ open, onClose, demo = false }) {
   const navigate = useNavigate()
   const { firebaseUser, profile, role, logout } = useAuth()
-  const preview = ADMIN_PREVIEW_ENABLED
-  const displayName = preview
-    ? ADMIN_PREVIEW_USER.fullName
+  const preview = ADMIN_PREVIEW_ENABLED && !demo
+  const demoSession = demo || preview
+  const demoUser = demo ? DEMO_ADMIN_USER : ADMIN_PREVIEW_USER
+  const displayName = demoSession
+    ? demoUser.fullName
     : profile?.fullName ||
       profile?.name ||
       firebaseUser?.displayName ||
       firebaseUser?.email?.split('@')[0] ||
       'Admin'
-  const email = preview ? ADMIN_PREVIEW_USER.email : profile?.email || firebaseUser?.email || ''
-  const displayRole = preview ? ADMIN_PREVIEW_USER.role : role
+  const email = demoSession ? demoUser.email : profile?.email || firebaseUser?.email || ''
+  const displayRole = demoSession ? demoUser.role : role
 
   const handleSessionAction = () => {
-    if (preview) {
+    if (demoSession) {
       navigate('/login')
       return
     }
@@ -71,10 +74,14 @@ export default function AdminSidebar({ open, onClose }) {
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#146c94]" aria-hidden="true" />
             <div className="min-w-0">
               <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#005374]">
-                {preview ? 'Preview workspace' : 'Admin console'}
+                {demo ? 'Demo workspace' : preview ? 'Preview workspace' : 'Admin console'}
               </p>
               <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
-                {preview ? 'Demo access · Firebase bypassed' : 'Verified admin workspace'}
+                {demo
+                  ? 'Dev-only · Authentication bypassed'
+                  : preview
+                    ? 'Demo access · Firebase bypassed'
+                    : 'Verified admin workspace'}
               </p>
             </div>
           </div>
@@ -87,7 +94,12 @@ export default function AdminSidebar({ open, onClose }) {
           <ul className="mt-2 space-y-1">
             {ADMIN_NAV.map(({ label, to, icon: Icon, end }) => (
               <li key={to}>
-                <NavLink to={to} end={end} onClick={onClose} className={navClassName}>
+                <NavLink
+                  to={demo ? toDemoPath(to) : to}
+                  end={end}
+                  onClick={onClose}
+                  className={navClassName}
+                >
                   {({ isActive }) => (
                     <>
                       <Icon

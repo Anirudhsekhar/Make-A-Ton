@@ -4,14 +4,15 @@ import Brand from '../Brand'
 import DemoModeBadge from './DemoModeBadge'
 import SampleDataBadge from './SampleDataBadge'
 import { ADMIN_NAV } from '../../config/adminNav'
+import { fromDemoPath } from '../../config/demoMode'
 
 function getCurrentSection(pathname) {
   return ADMIN_NAV.find((item) => pathname === item.to || pathname.startsWith(`${item.to}/`))
 }
 
-export default function AdminTopbar({ onOpenNav }) {
+export default function AdminTopbar({ onOpenNav, demo = false }) {
   const { pathname } = useLocation()
-  const current = getCurrentSection(pathname)
+  const current = getCurrentSection(demo ? fromDemoPath(pathname) : pathname)
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
@@ -41,7 +42,7 @@ export default function AdminTopbar({ onOpenNav }) {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          <DemoModeBadge />
+          <DemoModeBadge demo={demo} />
           <SampleDataBadge />
         </div>
       </div>

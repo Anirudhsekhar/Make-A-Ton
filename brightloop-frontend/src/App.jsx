@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import AdminLayout from './components/admin/AdminLayout'
 import AdminPreviewRoute from './components/admin/AdminPreviewRoute'
 import ProtectedRoute from './components/auth/ProtectedRoute'
+import { DEMO_MODE_ENABLED } from './config/demoMode'
 import { ROLES } from './config/roles'
 import DashboardPlaceholder from './pages/DashboardPlaceholder'
 import ForgotPassword from './pages/ForgotPassword'
@@ -69,6 +70,58 @@ export default function App() {
           />
         </Route>
       </Route>
+
+      {DEMO_MODE_ENABLED && (
+        <Route path="/demo/admin" element={<AdminLayout demo />}>
+          <Route index element={<Navigate to="/demo/admin/dashboard" replace />} />
+          <Route path="dashboard" element={<AdminOverview />} />
+          <Route
+            path="staff"
+            element={
+              <AdminModulePlaceholder
+                title="Staff"
+                description="Invite internal staff, manage access and keep support roles current."
+              />
+            }
+          />
+          <Route
+            path="products"
+            element={
+              <AdminModulePlaceholder
+                title="Products"
+                description="Define services, software and add-ons, including their variants and pricing."
+              />
+            }
+          />
+          <Route
+            path="plans"
+            element={
+              <AdminModulePlaceholder
+                title="Plans"
+                description="Build billing plans, connect them to products and control availability."
+              />
+            }
+          />
+          <Route
+            path="taxes"
+            element={
+              <AdminModulePlaceholder
+                title="Taxes"
+                description="Maintain tax rules and keep billing calculations consistent."
+              />
+            }
+          />
+          <Route
+            path="discounts"
+            element={
+              <AdminModulePlaceholder
+                title="Discounts"
+                description="Create discount codes with clear limits, scopes and validity windows."
+              />
+            }
+          />
+        </Route>
+      )}
 
       <Route element={<ProtectedRoute allowedRoles={[ROLES.CUSTOMER]} />}>
         <Route
