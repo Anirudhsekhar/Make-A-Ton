@@ -35,6 +35,16 @@ export function formatDate(value) {
   }).format(date)
 }
 
+export function formatMoney(value, currency = 'USD') {
+  if (typeof value !== 'number' || Number.isNaN(value)) return '—'
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
 export function getInitials(value) {
   if (!value || typeof value !== 'string') return 'BL'
   const parts = value.trim().split(/\s+/).filter(Boolean)

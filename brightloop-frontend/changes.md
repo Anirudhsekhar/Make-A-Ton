@@ -297,7 +297,38 @@ Append a new dated entry for every implementation task. Never overwrite previous
 
 ### Outstanding integration TODOs
 - Set the agreed `VITE_CUSTOMER_OVERVIEW_ENDPOINT`, `VITE_CUSTOMER_SUBSCRIPTIONS_ENDPOINT`, `VITE_CUSTOMER_INVOICES_ENDPOINT` and `VITE_CUSTOMER_UPDATE_PROFILE_ENDPOINT` values with Thowfeek. Paths were intentionally not guessed.
-- Confirm the subscription action verb, profile update contract, PDF response type/headers and error shapes with FastAPI.
-- Backend must verify the Firebase ID token, customer role and ownership for every subscription/invoice/detail/PDF request.
-- Confirm Firebase reauthentication and email-verification behavior with Devananda for email/password changes.
 - Replace real-route integration-pending errors with approved API contracts, then add server-driven pagination, retry and empty states where applicable.
+
+## 2026-10-31 — Sales Rep and Finance Lead Portals (development only)
+
+### Files modified
+- `src/App.jsx`
+- `src/lib/adminFormat.js`
+- `src/lib/customerFormat.js`
+
+### Functional / UI changes
+- Added development-only `/demo/sales` and `/demo/finance` preview routes. They render the Sales Rep and Finance Lead portals immediately without Firebase login or Firestore user profiles.
+- Both routes are gated by `import.meta.env.DEV` so they are removed from production bundles entirely.
+- `/demo/sales` renders `SalesLayout demo` with sidebar navigation to Dashboard, Customers, Quotations, Subscriptions and Invoices.
+- `/demo/finance` renders `FinanceLayout demo` with sidebar navigation to Dashboard, Invoices, Payments and Subscriptions.
+- Sales Rep portal modules: Dashboard (stat cards), Customers (read-only list with search/filter), Quotations (create/view templates), Subscriptions (lifecycle management), Invoices (read-only billing view).
+- Finance Lead portal modules: Finance Dashboard (revenue, outstanding, overdue, aging chart), Invoices (view all with lifecycle management), Payments (record payments, view history), Subscriptions (read-only details).
+- All sidebar links work via `StaffSidebar.navTo()` which rewrites paths from `/sales/...` to `/demo/sales/...` and `/finance/...` to `/demo/finance/...` in demo mode.
+- Demo data comes from the existing `StaffDemoDataContext` local fixtures; nothing is persisted and no Firebase records are created.
+- Sales Rep role cannot access Staff Management, Product/Plan/Tax/Discount administration, Payment Management, or Finance Dashboard.
+- Finance Lead role cannot access Staff Management, Product/Plan/Tax/Discount administration, Quotation editing, or Subscription creation/editing.
+- Existing authentication routes (/login, /signup, /forgot-password) remain intact.
+- Existing protected routes (/customer, /staff) continue to enforce Firebase role verification.
+
+### Demo-only behavior
+- Preview modes are gated by `import.meta.env.DEV`, which Vite compiles to `false` in production, so the demo routes and badge are removed from production bundles.
+- Demo data comes from `StaffDemoDataContext` sample fixtures held in local component state. Refreshing resets it; nothing is persisted and no Firestore/FastAPI calls are made.
+- Sales and Finance sidebar navigation works exclusively in development mode.
+
+### Build
+- `npm run build` — passed (Vite 8.3.5, 2146 modules transformed).
+- `npm run lint` — passed with only pre-existing warnings.
+
+### Outstanding integration TODOs
+- Replace the demo data with FastAPI/Firestore adapters when backend is available.
+- Confirm server-enforced role verification for real `/sales` and `/finance` routes.
