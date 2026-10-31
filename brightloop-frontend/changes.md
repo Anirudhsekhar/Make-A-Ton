@@ -240,3 +240,64 @@ Append a new dated entry for every implementation task. Never overwrite previous
 - Enforce product-plan referential integrity and the publish/activation rule on the server; keep the frontend Needs plan workflow aligned.
 - Move tax calculations, discount eligibility, expiry, usage tracking and invoice application fully into the backend.
 - Add integration-level loading, error, retry and pagination handling for each list once endpoints exist.
+
+## 2026-10-31 — Customer Portal + development-only `/demo/customer`
+
+### Files added
+- `src/config/customerNav.js`
+- `src/config/customerDemo.js`
+- `src/hooks/useCustomerBasePath.js`
+- `src/data/customer/customerDemoData.js`
+- `src/services/customer/customerService.js`
+- `src/lib/customerFormat.js`
+- `src/lib/customerInvoicePdf.js`
+- `src/context/CustomerPortalContext.jsx`
+- `src/components/customer/CustomerLayout.jsx`
+- `src/components/customer/CustomerSidebar.jsx`
+- `src/components/customer/CustomerTopbar.jsx`
+- `src/components/customer/CustomerDemoNotice.jsx`
+- `src/pages/customer/CustomerOverview.jsx`
+- `src/pages/customer/CustomerSubscriptions.jsx`
+- `src/pages/customer/CustomerSubscriptionDetail.jsx`
+- `src/pages/customer/CustomerInvoices.jsx`
+- `src/pages/customer/CustomerInvoiceDetail.jsx`
+- `src/pages/customer/CustomerAccount.jsx`
+
+### Files modified
+- `src/App.jsx`
+- `src/services/authService.js`
+- `src/services/userProfileService.js` — fixed a pre-existing malformed `getVerifiedProfile` `try/catch` that prevented the build from parsing.
+- `src/components/admin/DemoModeBadge.jsx` — generalized the tooltip so the same badge works for customer demo mode.
+- `.env.example`
+- `changes.md`
+
+### Functional / UI changes
+- Added the full customer portal under `/customer` using the existing light editorial design tokens and reused admin primitives (`AdminPageHeader`, `Panel`, `StatCard`, `StatusBadge`, `AdminDataTable`, `AdminInput`, `AdminSelect`, `AdminButton`, `AdminModal`, state components, sample-data labels).
+- Completed Overview, My Subscriptions, subscription detail, My Invoices, invoice detail and My Account pages with responsive layouts.
+- Overview shows active subscriptions, next renewal, outstanding amount, recent invoices, quick actions, loading/empty/error states and refresh.
+- My Subscriptions lists subscription number, plan/product, term, renewal, price, billing frequency and status, with search and status filters. Detail pages show line items, quantities, taxes, totals, renewal/expiry dates and status history.
+- Subscription actions (pause, renew, cancellation request) are enabled only when the plan policy permits. Disabled actions show the reason from the plan/demo policy.
+- My Invoices lists invoice number, issue/due dates, total, customer status and separate workflow state, with search/filter and PDF actions. Invoice detail shows line items, totals and payment history. No Pay Now action was added; the UI states that payment collection remains with billing.
+- My Account supports editable full name, email, business type, phone, company, profile save states, password validation/checklist, and logout. Email/password changes in production use Firebase reauthentication, `verifyBeforeUpdateEmail`/`updatePassword`; the email text field is never treated as a login identity change by itself.
+- Added `CustomerPortalProvider` to normalize demo and real data access, derive overview values, and expose reload/action methods to pages.
+- Real customer routes remain inside the existing customer-role `ProtectedRoute`. Admin routes, `/demo/admin`, Firebase auth, role verification and existing customer/staff route behavior were preserved.
+- Added `src/services/customer/customerService.js` with isolated methods for overview, own subscriptions/detail/actions, own invoices/detail/PDF/payment history, and profile read/update. Requests send the Firebase ID token and use configurable `VITE_CUSTOMER_*` endpoints.
+
+### Demo-only behavior
+- Added `/demo/customer` and child routes only when `DEMO_MODE_ENABLED` (`import.meta.env.DEV`) is true. The routes render the customer layout without Firebase, profile verification or `ProtectedRoute`.
+- Demo sidebar links stay under `/demo/customer`; the topbar shows the amber `DEMO MODE` badge and a sample-data badge. The sidebar shows a mock customer identity and exits to `/login` without calling Firebase sign-out.
+- Demo data comes from `src/data/customer/customerDemoData.js` and is held in `CustomerPortalContext` local component state. Refreshing resets it; nothing is persisted and no Firestore/FastAPI calls are made.
+- Demo pause/renew/cancellation actions mutate local sample state and explicitly state they are demo-session simulations. Profile edits and password changes are local simulations; passwords are never stored or logged.
+- Demo PDF download generates a clearly labelled sample PDF in the browser and states that no server PDF was fetched.
+
+### Tests / build
+- `npm run build` — passed (Vite 8.3.5, 2125 modules transformed). Existing large-chunk advisory remains.
+- `npm run lint` — completed with no errors. Remaining warnings are the existing unused `firebaseUser` parameter in `src/services/userProfileService.js`, existing admin demo context fast-refresh warnings, plus new fast-refresh and `set-state-in-effect` warnings in the customer context/account page.
+- No development or preview server was started.
+
+### Outstanding integration TODOs
+- Set the agreed `VITE_CUSTOMER_OVERVIEW_ENDPOINT`, `VITE_CUSTOMER_SUBSCRIPTIONS_ENDPOINT`, `VITE_CUSTOMER_INVOICES_ENDPOINT` and `VITE_CUSTOMER_UPDATE_PROFILE_ENDPOINT` values with Thowfeek. Paths were intentionally not guessed.
+- Confirm the subscription action verb, profile update contract, PDF response type/headers and error shapes with FastAPI.
+- Backend must verify the Firebase ID token, customer role and ownership for every subscription/invoice/detail/PDF request.
+- Confirm Firebase reauthentication and email-verification behavior with Devananda for email/password changes.
+- Replace real-route integration-pending errors with approved API contracts, then add server-driven pagination, retry and empty states where applicable.

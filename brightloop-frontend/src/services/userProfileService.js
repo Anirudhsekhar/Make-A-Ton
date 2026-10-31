@@ -86,15 +86,8 @@ export async function getVerifiedProfile(firebaseUser) {
       status: PROFILE_STATUS.READY,
       profile: normalizeProfile(data),
     }
-  }   catch (error) {
+  } catch (error) {
     if (error.status === 404) {
-      return { status: PROFILE_STATUS.NOT_FOUND }
-    }
-
-    return errorResult(error)
-  }
-
-    if (error.message?.includes('404')) {
       return { status: PROFILE_STATUS.NOT_FOUND }
     }
 
