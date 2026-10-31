@@ -8,8 +8,12 @@ import DashboardPlaceholder from './pages/DashboardPlaceholder'
 import ForgotPassword from './pages/ForgotPassword'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
-import AdminModulePlaceholder from './pages/admin/AdminModulePlaceholder'
+import AdminDiscounts from './pages/admin/AdminDiscounts'
 import AdminOverview from './pages/admin/AdminOverview'
+import AdminPlans from './pages/admin/AdminPlans'
+import AdminProducts from './pages/admin/AdminProducts'
+import AdminStaff from './pages/admin/AdminStaff'
+import AdminTaxes from './pages/admin/AdminTaxes'
 
 export default function App() {
   return (
@@ -23,51 +27,11 @@ export default function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<AdminOverview />} />
-          <Route
-            path="staff"
-            element={
-              <AdminModulePlaceholder
-                title="Staff"
-                description="Invite internal staff, manage access and keep support roles current."
-              />
-            }
-          />
-          <Route
-            path="products"
-            element={
-              <AdminModulePlaceholder
-                title="Products"
-                description="Define services, software and add-ons, including their variants and pricing."
-              />
-            }
-          />
-          <Route
-            path="plans"
-            element={
-              <AdminModulePlaceholder
-                title="Plans"
-                description="Build billing plans, connect them to products and control availability."
-              />
-            }
-          />
-          <Route
-            path="taxes"
-            element={
-              <AdminModulePlaceholder
-                title="Taxes"
-                description="Maintain tax rules and keep billing calculations consistent."
-              />
-            }
-          />
-          <Route
-            path="discounts"
-            element={
-              <AdminModulePlaceholder
-                title="Discounts"
-                description="Create discount codes with clear limits, scopes and validity windows."
-              />
-            }
-          />
+          <Route path="staff" element={<AdminStaff />} />
+          <Route path="products" element={<AdminProducts />} />
+          <Route path="plans" element={<AdminPlans />} />
+          <Route path="taxes" element={<AdminTaxes />} />
+          <Route path="discounts" element={<AdminDiscounts />} />
         </Route>
       </Route>
 
@@ -75,51 +39,11 @@ export default function App() {
         <Route path="/demo/admin" element={<AdminLayout demo />}>
           <Route index element={<Navigate to="/demo/admin/dashboard" replace />} />
           <Route path="dashboard" element={<AdminOverview />} />
-          <Route
-            path="staff"
-            element={
-              <AdminModulePlaceholder
-                title="Staff"
-                description="Invite internal staff, manage access and keep support roles current."
-              />
-            }
-          />
-          <Route
-            path="products"
-            element={
-              <AdminModulePlaceholder
-                title="Products"
-                description="Define services, software and add-ons, including their variants and pricing."
-              />
-            }
-          />
-          <Route
-            path="plans"
-            element={
-              <AdminModulePlaceholder
-                title="Plans"
-                description="Build billing plans, connect them to products and control availability."
-              />
-            }
-          />
-          <Route
-            path="taxes"
-            element={
-              <AdminModulePlaceholder
-                title="Taxes"
-                description="Maintain tax rules and keep billing calculations consistent."
-              />
-            }
-          />
-          <Route
-            path="discounts"
-            element={
-              <AdminModulePlaceholder
-                title="Discounts"
-                description="Create discount codes with clear limits, scopes and validity windows."
-              />
-            }
-          />
+          <Route path="staff" element={<AdminStaff />} />
+          <Route path="products" element={<AdminProducts />} />
+          <Route path="plans" element={<AdminPlans />} />
+          <Route path="taxes" element={<AdminTaxes />} />
+          <Route path="discounts" element={<AdminDiscounts />} />
         </Route>
       )}
 

@@ -180,3 +180,63 @@ Append a new dated entry for every implementation task. Never overwrite previous
 ### Outstanding integration TODOs
 - Replace the demo overview adapter with the agreed FastAPI endpoint when available.
 - Confirm server-enforced admin role verification end-to-end for the real `/admin` routes.
+
+## 2026-10-31 — Implement all five Admin modules
+
+### Files added
+- `src/data/admin/adminDemoData.js`
+- `src/context/AdminDemoDataContext.jsx`
+- `src/hooks/useAdminBasePath.js`
+- `src/components/admin/AdminButton.jsx`
+- `src/components/admin/AdminField.jsx`
+- `src/components/admin/AdminModal.jsx`
+- `src/components/admin/AdminDataTable.jsx`
+- `src/components/admin/StatusToggle.jsx`
+- `src/components/admin/AdminConfirmDialog.jsx`
+- `src/components/admin/AdminSummaryCards.jsx`
+- `src/components/admin/AdminFlashMessage.jsx`
+- `src/pages/admin/AdminStaff.jsx`
+- `src/pages/admin/AdminProducts.jsx`
+- `src/pages/admin/AdminPlans.jsx`
+- `src/pages/admin/AdminTaxes.jsx`
+- `src/pages/admin/AdminDiscounts.jsx`
+
+### Files modified
+- `src/App.jsx`
+- `src/components/admin/AdminLayout.jsx`
+- `changes.md`
+
+### Functional / UI changes
+- Added full Staff, Products & Variants, Subscription Plans, Taxes, and Discounts modules for both `/admin/...` and development-only `/demo/admin/...` routes.
+- Replaced the five admin module placeholders with working list pages: page headers, summary cards, search/filter toolbars, responsive desktop tables and mobile card rows, empty states, status toggles and row actions.
+- Added reusable admin primitives for compact labels/inputs/selects/textareas, buttons, modals, data tables, confirmation dialogs, status switches, summary cards and demo update messages.
+- Added functional Add/Edit forms with client-side validation:
+  - Staff: required name/email, valid email, duplicate email check, password policy (more than 8 characters, uppercase, lowercase, special character), fixed Internal Staff role, Active/Inactive status.
+  - Products: required name/type, nonnegative sales and cost prices, numeric variant adjustments, multiple add/remove variant rows and computed selling price per variant.
+  - Plans: required product link, nonnegative price, billing period, minimum quantity >= 1, date range validation and four policy toggles (auto-close, early close, pause, renew).
+  - Taxes: required name, numeric rate restricted to 0–100, description, status and a sample $1,000 calculation preview.
+  - Discounts: fixed/percentage value validation, minimum purchase or quantity, date range, optional positive usage limit, selected-product or whole-subscription applicability and an eligibility summary.
+- Added demo CRUD interactions: create and edit records, activate/deactivate staff, products, plans, taxes and discounts, and delete plans with a confirmation dialog.
+- Products show their related plan count, flag products without a plan as **Needs plan**, and link to the Plans module with the product pre-filled in the Add Plan form.
+- Preserved the existing admin shell, sidebar, topbar, navigation structure, design tokens, responsive behavior, Login/Signup/Forgot Password, Firebase services, customer/staff routes and production admin guard.
+
+### Demo-only behavior
+- All module data comes from `src/data/admin/adminDemoData.js` and is held in `AdminDemoDataContext` local component state inside the existing admin layout; changes reset on reload and are never written to Firebase or FastAPI.
+- Every page keeps the existing sample-data badge/notice language. New records use stable generated IDs and realistic sample values.
+- Staff initial passwords are only used for local validation. They are not stored in the staff records, lists, context state or logs; the field is cleared when the dialog closes.
+- Product-to-plan navigation rewrites to the current admin base path, so demo links stay under `/demo/admin/plans`.
+- No Firebase collections, backend endpoints, billing calculations or server permissions were invented or modified.
+
+### Tests / build
+- `npm run build` — passed (Vite 8.3.5, 2107 modules transformed). The existing large-chunk advisory remains.
+- `npm run lint` — completed with no errors. Remaining warnings: existing unused `firebaseUser` parameter in `src/services/userProfileService.js` and two fast-refresh export warnings in `src/context/AdminDemoDataContext.jsx`.
+- No development or preview server was started.
+
+### Outstanding integration TODOs
+- Wire each module to the agreed FastAPI CRUD endpoints and confirm schemas, identifiers, currency, date formats, pagination and error contracts with Thowfeek.
+- Implement privileged staff creation through the backend/Firebase Admin SDK (Auth user + trusted staff profile); keep plaintext passwords out of the client after submission.
+- Confirm Firestore profile/role schema and server-enforced admin authorization with Devananda.
+- Add real persistence and replace the local demo provider once API adapters are available.
+- Enforce product-plan referential integrity and the publish/activation rule on the server; keep the frontend Needs plan workflow aligned.
+- Move tax calculations, discount eligibility, expiry, usage tracking and invoice application fully into the backend.
+- Add integration-level loading, error, retry and pagination handling for each list once endpoints exist.
