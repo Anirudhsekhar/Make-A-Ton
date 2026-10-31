@@ -1,6 +1,7 @@
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 from auth_routes import router as auth_router
+from staff_routes import router as staff_router
 
 app = FastAPI(
     title="Brightloop API",
@@ -31,3 +32,4 @@ def health_check():
 
 
 app.include_router(auth_router)
+app.include_router(staff_router)
